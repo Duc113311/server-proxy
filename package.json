@@ -1,0 +1,27 @@
+{
+  "name": "corsproxy",
+  "description": "Simple Cors Proxy",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "body-parser": "~1.5.2",
+    "cors": "^2.8.5",
+    "crypto-js": "^4.2.0",
+    "express": "^4.18.2",
+    "node-fetch": "^2.7.0",
+    "pako": "^2.1.0",
+    "request": "~2.36.0"
+  },
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
