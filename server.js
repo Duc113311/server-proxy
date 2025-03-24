@@ -35,11 +35,14 @@ app.use("/proxy/:apiName/*", async (req, res) => {
     controller.abort();
     console.log("[⏰] Request timed out");
   }, 10000);
+  let raw = "";
 
   try {
     const fetchRes = await fetch(fullUrl, {
       method: req.method,
       headers: {
+        "User-Agent": "Node.js Proxy Server",
+        Accept: "application/json",
         ...req.headers,
         "Content-Type": req.headers["content-type"] || "application/json",
       },
@@ -56,30 +59,29 @@ app.use("/proxy/:apiName/*", async (req, res) => {
     clearTimeout(timeout);
     console.log(`[✓] Response nhận được từ ${apiName}`);
 
-    const raw = await fetchRes.text();
-    console.log("[DEBUG] Raw response:", raw.slice(0, 100)); // in trước 100 ký tự
+    const contentType = fetchRes.headers.get("content-type") || "";
+    raw = await fetchRes.text(); // lấy trước dù là ipfind hay không
 
-    let decoded;
-    try {
-      decoded = decodeBase64(raw);
-      if (decoded) {
-        const parsed = JSON.parse(decoded);
-        console.log("[✓] Decode & JSON.parse thành công");
-        return res.status(fetchRes.status).json(parsed);
-      } else {
-        throw new Error("decodeBase64 trả về null");
+    if (apiName === "ipfind") {
+      try {
+        const json = JSON.parse(raw); // parse JSON nếu ipfind
+        return res.status(fetchRes.status).json(json);
+      } catch (e) {
+        console.warn(`[ipfind] ❌ JSON parse lỗi, trả raw`, e.message);
+        return res.status(fetchRes.status).send(raw);
       }
-    } catch (e) {
-      console.warn("[!] Không decode được, trả về raw text:", e.message);
-      return res.status(fetchRes.status).send(raw); // fallback
+    } else {
+      const decoded = decodeBase64(raw);
+      const parsed = JSON.parse(decoded);
+      return res.status(fetchRes.status).json(parsed);
     }
-
   } catch (err) {
     clearTimeout(timeout);
     console.error(`[✖] Proxy lỗi: ${err.message}`);
-    res.status(500).json({
+    return res.status(500).json({
       error: "Lỗi proxy",
       message: err.message,
+      raw: raw?.slice?.(0, 100),
     });
   }
 });
